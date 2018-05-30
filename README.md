@@ -1,11 +1,14 @@
 # clove [![Build Status](https://travis-ci.com/Lamden/clove.svg?token=ZJstcVy9cUkAxLqvqRuL&branch=master)](https://travis-ci.com/Lamden/clove)
 
-version number: 1.1.0
+version number: 1.1.1
 
 
 ## Overview
 
 Clove is a library that makes atomic swaps between chains easy.
+
+
+Documentation available at [lamden.github.io/clove](https://lamden.github.io/clove).
 
 
 ## Installation
