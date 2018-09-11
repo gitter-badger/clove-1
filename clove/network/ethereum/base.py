@@ -291,3 +291,9 @@ class EthereumBaseNetwork(BaseNetwork):
                     'secret': events[0]['data'][2:],
                     'transaction_hash': events[0]['transactionHash'].hex()
                 }
+
+    @classmethod
+    def get_transaction_url(cls, tx_hash: str) -> Optional[str]:
+        if not cls.blockexplorer_tx:
+            return
+        return cls.blockexplorer_tx.format(tx_hash)

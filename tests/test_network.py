@@ -10,7 +10,7 @@ from validators import domain
 from clove.constants import CRYPTOID_SUPPORTED_NETWORKS
 from clove.exceptions import ImpossibleDeserialization
 from clove.network import BITCOIN_BASED as networks
-from clove.network import BitcoinTestNet, Monacoin
+from clove.network import BitcoinTestNet
 from clove.network.bitcoin.base import BitcoinBaseNetwork
 from clove.network.bitcoin.utxo import Utxo
 from clove.utils.bitcoin import auto_switch_params
@@ -126,87 +126,6 @@ cryptoid_utxo_response = {
     ]
 }
 
-monacoin_utxo_response = [
-  {
-    "txid": "e0832ca854e4577cab20413013d6251c4a426022112d9ff222067bb5d8b6b723",
-    "vout": 0,
-    "scriptPubKey": {
-      "asm": "OP_DUP OP_HASH160 098671104a3dd5b8eb1559929221d946073a34ba OP_EQUALVERIFY OP_CHECKSIG",
-      "hex": "76a9143804c5840717fb1c5c8ac0bd2726556a51e91fcd99ac",
-      "type": "pubkeyhash",
-      "address": "M8mXNKtwFoW765V8VEbhZ8TNCqywFr25in"
-    },
-    "value": 90000070
-  },
-  {
-    "txid": "308b997d8583aa48a7b265246eb76e5d030495468bbb87989606aea769b03600",
-    "vout": 1,
-    "scriptPubKey": {
-      "asm": "OP_DUP OP_HASH160 098671104a3dd5b8eb1559929221d946073a34ba OP_EQUALVERIFY OP_CHECKSIG",
-      "hex": "76a9143804c5840717fb1c5c8ac0bd2726556a51e91fcd99ac",
-      "type": "pubkeyhash",
-      "address": "M8mXNKtwFoW765V8VEbhZ8TNCqywFr25in"
-    },
-    "value": 15500105
-  },
-]
-
-expected_utxo = [
-    Utxo(
-        tx_id='e0832ca854e4577cab20413013d6251c4a426022112d9ff222067bb5d8b6b723',
-        vout=0,
-        value=0.9000007,
-        tx_script='76a9143804c5840717fb1c5c8ac0bd2726556a51e91fcd99ac'
-    ),
-    Utxo(
-        tx_id='308b997d8583aa48a7b265246eb76e5d030495468bbb87989606aea769b03600',
-        vout=1,
-        value=0.15500105,
-        tx_script='76a9143804c5840717fb1c5c8ac0bd2726556a51e91fcd99ac'
-    )
-]
-expected_utxo_dicts = [utxo.__dict__ for utxo in expected_utxo]
-
-
-@mark.parametrize('network', networks)
-@patch('clove.utils.external_source.clove_req_json')
-@patch.dict('os.environ', {'CRYPTOID_API_KEY': 'test_api_key'})
-def test_getting_utxo(json_response, network):
-    if network.name == 'monacoin':
-        # there is a separate test for monacoin utxo
-        return
-    address = 'testaddress'
-    amount = 1.0
-    symbol = network.symbols[0].lower()
-    # networks supported by blockcypher
-    if network.name in ('test-bitcoin', 'dogecoin'):
-        json_response.return_value = blockcypher_utxo_response
-
-        assert [utxo.__dict__ for utxo in network.get_utxo(address, amount)] == expected_utxo_dicts
-
-        assert json_response.call_args[0][0].startswith('https://api.blockcypher.com')
-        return
-
-    if network.is_test_network() or symbol not in CRYPTOID_SUPPORTED_NETWORKS:
-        with pytest.raises(NotImplementedError):
-            network.get_utxo(address, amount)
-        return
-
-    json_response.return_value = cryptoid_utxo_response
-
-    assert [utxo.__dict__ for utxo in network.get_utxo(address, amount)] == expected_utxo_dicts
-    assert json_response.call_args[0][0].startswith('https://chainz.cryptoid.info/')
-
-
-@patch('clove.network.bitcoin_based.monacoin.clove_req_json', return_value=monacoin_utxo_response)
-def test_getting_utxo_monacoin(json_response):
-    network = Monacoin()
-    address = 'testaddress'
-    amount = 1.0
-    assert [utxo.__dict__ for utxo in network.get_utxo(address, amount)] == expected_utxo_dicts
-    assert json_response.call_args[0][0].startswith('https://mona.chainseeker.info/api/v1/utxos/')
-
-
 def test_filter_blacklisted_nodes_method():
     network = BitcoinBaseNetwork()
     network.blacklist_nodes = {'107.150.122.31': 4, '107.170.239.46': 1, '108.144.213.98': 3, '13.113.121.156': 4}
@@ -306,7 +225,7 @@ def test_blockexplorer_tx_url():
     assert '123' in url
 
 
-@patch('clove.network.bitcoin_based.monacoin.clove_req_json')
+@patch('clove.block_explorer.monacoin.clove_req_json')
 def test_extract_secret_monacoin(json_response):
     contract_transactions_mock = [
         'a0110ac963517ea12935fabe92ecd90217ba6847069dad21f9523bbc83bbf0e4',
